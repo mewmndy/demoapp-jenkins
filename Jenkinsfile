@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+  options {
+    skipDefaultCheckout(true)
+  }
+
   parameters {
     gitParameter(
       name: 'BRANCH_NAME',
@@ -12,16 +16,19 @@ pipeline {
   }
 
   environment {
+    REPO_URL = "https://github.com/mewmndy/demoapp-jenkins.git"
     IMAGE_NAME = "demoapp"
     CONTAINER_NAME = "demoapp_container"
-    REPO_URL = "https://github.com/mewmndy/demoapp-jenkins.git"
   }
 
   stages {
 
     stage('Checkout') {
       steps {
-        git branch: params.BRANCH_NAME, url: env.REPO_URL
+        script {
+          def cleanBranch = params.BRANCH_NAME.replace("origin/", "")
+          git branch: cleanBranch, url: env.REPO_URL
+        }
       }
     }
 
