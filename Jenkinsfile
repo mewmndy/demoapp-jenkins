@@ -11,7 +11,7 @@ pipeline {
       type: 'PT_BRANCH',
       defaultValue: 'main',
       branchFilter: '.*',
-      description: 'เลือก branch จาก GitHub'
+      description: 'เลือก branch'
     )
   }
 
@@ -34,25 +34,26 @@ pipeline {
 
     stage('Build') {
       steps {
-        sh '''
-          echo "Building from branch: ${BRANCH_NAME}"
-          docker build -t $IMAGE_NAME:${BRANCH_NAME} .
-        '''
+        script {
+          def tag = params.BRANCH_NAME.replace("origin/", "").replace("/", "-")
+          sh """
+            echo "Building from branch: ${tag}"
+            docker build -t $IMAGE_NAME:${tag} .
+          """
+        }
       }
     }
 
     stage('Deploy') {
       steps {
-        sh '''
-          docker stop $CONTAINER_NAME || true
-          docker rm $CONTAINER_NAME || true
-
-          docker run -d \
-            --name $CONTAINER_NAME \
-            -p 3000:3000 \
-            -e APP_BRANCH=${BRANCH_NAME} \
-            $IMAGE_NAME:${BRANCH_NAME}
-        '''
+        script {
+          def tag = params.BRANCH_NAME.replace("origin/", "").replace("/", "-")
+          sh """
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+            docker run -d --name $CONTAINER_NAME -p 3000:3000 $IMAGE_NAME:${tag}
+          """
+        }
       }
     }
   }
