@@ -11,14 +11,7 @@ pipeline {
   }
 
   stages {
-
-    stage('Checkout') {
-      steps {
-        git branch: 'main', url: 'git@github.com:mewmndy/demoapp-jenkins.git'
-      }
-    }
-
-    stage('Build Image') {
+    stage('Build') {
       steps {
         sh 'docker build -t $IMAGE_NAME:latest .'
       }
@@ -29,10 +22,7 @@ pipeline {
         sh '''
           docker stop $CONTAINER_NAME || true
           docker rm $CONTAINER_NAME || true
-          docker run -d \
-            --name $CONTAINER_NAME \
-            -p 3000:3000 \
-            $IMAGE_NAME:latest
+          docker run -d -p 3000:3000 --name $CONTAINER_NAME $IMAGE_NAME:latest
         '''
       }
     }
