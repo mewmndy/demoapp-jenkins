@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   parameters {
-    choice(name: 'DEPLOY_TYPE', choices: ['docker'], description: 'เลือกวิธี deploy')
+    string(name: 'APP_VERSION', defaultValue: '1.0.0', description: 'เวอร์ชันที่ต้องการ build')
   }
 
   environment {
@@ -14,7 +14,10 @@ pipeline {
 
     stage('Build') {
       steps {
-        sh 'docker build -t $IMAGE_NAME:latest .'
+        sh '''
+          echo "Building version ${APP_VERSION}"
+          docker build -t $IMAGE_NAME:${APP_VERSION} .
+        '''
       }
     }
 
@@ -23,7 +26,12 @@ pipeline {
         sh '''
           docker stop $CONTAINER_NAME || true
           docker rm $CONTAINER_NAME || true
-          docker run -d -p 3000:3000 --name $CONTAINER_NAME $IMAGE_NAME:latest
+
+          docker run -d \
+            --name $CONTAINER_NAME \
+            -p 3000:3000 \
+            -e APP_VERSION=${APP_VERSION} \
+            $IMAGE_NAME:${APP_VERSION}
         '''
       }
     }
